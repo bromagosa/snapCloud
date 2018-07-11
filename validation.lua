@@ -29,20 +29,15 @@ local Tokens = package.loaded.Tokens
 require 'responses'
 require 'email'
 
-local function create(msg, status)
-    status = status or 401
-    return {msg = msg, status = status}
-end
-
 err = {
-    not_logged_in = create('You are not logged in'),
-    auth = create('You do not have permission to perform this action'),
-    nonexistent_user = create('No user with this username exists'),
-    nonexistent_project = create('This project does not exist'),
-    not_public_project = create('This project is not public'),
-    expired_token = create('This token has expired'),
-    invalid_token = create('This token is either invalid or has expired'),
-    nonvalidated_user = create('This user has not been validated within the first 3 days after its creation.\nPlease use the cloud menu to ask for a new validation link.')
+    not_logged_in = 'You are not logged in',
+    auth = 'You do not have permission to perform this action',
+    nonexistent_user = 'No user with this username exists',
+    nonexistent_project = 'This project does not exist',
+    not_public_project = 'This project is not public',
+    expired_token = 'This token has expired',
+    invalid_token = 'This token is either invalid or has expired',
+    nonvalidated_user = 'This user has not been validated within the first 3 days after its creation.\nPlease use the cloud menu to ask for a new validation link.'
 }
 
 assert_all = function (assertions, self)
