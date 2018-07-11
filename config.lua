@@ -1,6 +1,6 @@
 local config = require('lapis.config')
 
-config({'development', 'staging', 'production'}, {
+config({'development', 'staging', 'production', 'test'}, {
     postgres = {
         host = os.getenv('DATABASE_URL') or '127.0.0.1:5432',
         user = os.getenv('DATABASE_USERNAME') or 'cloud',
@@ -29,7 +29,7 @@ config({'development', 'staging', 'production'}, {
     secondary_hostname = os.getenv('SECONDARY_HOSTNAME') or 'localhost'
 })
 
-config('development', {
+config({'development', 'test'}, {
     use_daemon = 'off',
     site_name = 'dev | Snap Cloud',
     port = os.getenv('PORT') or 8080,
