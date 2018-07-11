@@ -264,7 +264,7 @@ app:match('login', '/users/:username/login', respond_to({
                 return jsonResponse({ days_left = user.days_left })
             end
         else
-            yield_error({msg = 'wrong password', status = 401})
+            yield_error('wrong password')
         end
     end)
 }))
