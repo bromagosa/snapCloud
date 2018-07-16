@@ -20,8 +20,7 @@ dependencies = {
    "luacrypto",
    "xml",
    "lua-resty-mail",
-   "busted",
-   "json-lua"
+   "busted"
 }
 build = {
     type = "builtin",

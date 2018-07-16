@@ -26,16 +26,7 @@ local app = require 'app'
 local db = package.loaded.db
 local Users = package.loaded.Users
 local Tokens = package.loaded.Tokens
-local json_util = require('JSON')
 local test_util = {}
-
-function test_util.json_decode(json_str)
-    return json_util:decode(json_str)
-end
-
-function test_util.json_encode(lua_obj)
-    return json_util:encode(lua_obj)
-end
 
 -- Deletes all users and tokens from the database.
 function test_util.clean_db()

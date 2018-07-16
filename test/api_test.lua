@@ -41,7 +41,8 @@ describe('The login endpoint', function()
 
         local status, body, headers = request('/users/' .. username .. '/login', {
             method = 'POST',
-            data = api_password
+            data = api_password,
+            -- expect='json' TODO: this does not return JSON right now
         })
 
         assert.same(200, status)
@@ -54,13 +55,12 @@ describe('The login endpoint', function()
 
         local status, body, headers = request('/users/' .. username .. '/login', {
             method = 'POST',
-            data = api_password
+            data = api_password,
+            expect='json'
         })
 
-        local resp = test_util.json_decode(body)
-
         assert.same(200, status)
-        assert.same(3, resp.days_left)
+        assert.same(3, body.days_left)
     end)
 
     it('should error for a user with an expired token', function()
@@ -69,10 +69,11 @@ describe('The login endpoint', function()
 
         local status, body, headers = request('/users/' .. username .. '/login', {
             method = 'POST',
-            data = api_password
+            data = api_password,
+            expect='json'
         })
 
-        local error = test_util.json_decode(body).errors[1]
+        local error = body.errors[1]
 
         assert.same(401, status)
         assert.is.truthy(error:find('not') and error:find('validated'))
@@ -83,23 +84,23 @@ describe('The login endpoint', function()
 
         local status, body, headers = request('/users/' .. username .. '/login', {
             method = 'POST',
-            data = api_password .. 'a' -- append an invalid char
+            data = api_password .. 'a', -- append an invalid char
+            expect='json'
         })
 
-        local error = test_util.json_decode(body).errors[1]
-
         assert.same(401, status)
-        assert.same('wrong password', error)
+        assert.same('wrong password', body.errors[1])
     end)
 
     it('should error for a non-existent user', function()
         -- don't create user first
         local status, body, headers = request('/users/' .. username .. '/login', {
             method = 'POST',
-            data = api_password
+            data = api_password,
+            expect='json'
         })
 
-        local error = test_util.json_decode(body).errors[1]
+        local error = body.errors[1]
 
         assert.same(401, status)
         assert.is.truthy(error:find('No user') and error:find('exists'))
@@ -110,10 +111,11 @@ describe('The login endpoint', function()
 
         local status, body, headers = request('/users/' .. username .. '/login', {
             method = 'POST',
-            data = api_password
+            data = api_password,
+            expect='json'
         })
 
-        local error = test_util.json_decode(body).errors[1]
+        local error = body.errors[1]
 
         assert.same(401, status)
         assert.is.truthy(error:find('not') and error:find('validated'))
