@@ -26,6 +26,8 @@ local domain_allowed = {}
 domain_allowed['snap.berkeley.edu'] = true
 domain_allowed['amazingrobots.net'] = true
 domain_allowed['snap4arduino.rocks'] = true
+-- This domain serves an HTTP only Snap! IDE
+domain_allowed['extensions.snap.berkeley.edu'] = true
 -- Snap4Arduino for Chromebooks
 domain_allowed['chrome-extension://bdmapaboflkhdmcgdpfooeeeadejodia'] = true
 -- App Server Domains
