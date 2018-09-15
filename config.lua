@@ -60,7 +60,7 @@ config({'production', 'staging'}, {
     secret = os.getenv('SESSION_SECRET_BASE'),
     code_cache = 'on',
 
-    log_directive = 'logs/error.log warn',
+    log_directive = 'logs/error.log debug',
 
     -- TODO: See if we can turn this on without a big hit
     measure_performance = false
