@@ -191,7 +191,7 @@ app:match('resendverification', '/users/:username/resendverification', respond_t
     end)
 }))
 
-app:match('resetpassword', '/users/:username/password_reset(/:token)', respond_to({
+app:match('password_reset', '/users/:username/password_reset(/:token)', respond_to({
     -- Methods:     GET, POST
     -- Description: Handles password reset requests.
 
@@ -275,7 +275,7 @@ app:match('login', '/users/:username/login', respond_to({
 }))
 
 
-app:match('verifyuser', '/users/:username/verify_user/:token', respond_to({
+app:match('verify_user', '/users/:username/verify_user/:token', respond_to({
     -- Methods:     GET
     -- Description: Verifies a user's email by means of a token, or removes
     --              that token if it has expired

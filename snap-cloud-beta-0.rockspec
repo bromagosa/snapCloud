@@ -19,7 +19,8 @@ dependencies = {
    "luasec",
    "luacrypto",
    "xml",
-   "lua-resty-mail"
+   "lua-resty-mail",
+   "luasocket"
 }
 build = {
     type = "builtin",
