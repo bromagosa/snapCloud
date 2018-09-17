@@ -127,8 +127,8 @@ create_token = function (self, purpose, username, email)
         self:build_url(self:url_for(
             purpose,
             {
-                username = url.escape(username),
-                token = url.escape(token_value),
+                username = url.build_path({username}),
+                token = url.build_path({token_value}),
             }
         ))
     )
