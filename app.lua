@@ -67,9 +67,12 @@ require 'responses'
 
 -- Make cookies persistent
 app.cookie_attributes = function(self)
+    if (self.cookies.persist_session == 'false') then
+        return "Path=/; HttpOnly;"
+    end
     local date = require("date")
     local expires = date(true):adddays(365):fmt("${http}")
-    return "Expires=" .. expires .. "; Path=/; HttpOnly;"
+    return  "Expires=" .. expires .. "; Path=/; HttpOnly;"
 end
 
 -- Database abstractions

@@ -48,10 +48,10 @@ require 'passwords'
 app:match('init', '/init', respond_to({
     OPTIONS = cors_options,
     POST = function (self)
-        if not self.session.username or
-            (self.session.username and self.cookies.persist_session == 'false') then
+        if not self.session.username then
             self.session.username = ''
         end
+        return okResponse('')
     end
 }))
 
