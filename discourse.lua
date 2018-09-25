@@ -80,8 +80,7 @@ end))
 
 function create_signature(payload)
     local digest = hmac.new(config.discourse_sso_secret, 'sha256')
-    digest:update(payload)
-    return encoding.encode_base64(digest:final())
+    return encoding.encode_base64(digest:final(payload))
 end
 
 function extract_payload(payload)
