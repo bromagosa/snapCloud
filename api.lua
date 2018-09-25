@@ -304,6 +304,7 @@ app:match('verify_user', '/users/:username/verify_user/:token', respond_to({
             function (user)
                 -- success callback
                 user:update({ verified = true })
+		self.session.verified = true
                 return user_page(user)
             end
         )
@@ -521,6 +522,7 @@ app:match('project', '/projects/:username/:projectname', respond_to({
             local user = Users:find(self.params.username)
             if (not user.verified) then
                 user:update({ verified = true })
+		self.session.verified = true
             end
 
             Projects:create({
