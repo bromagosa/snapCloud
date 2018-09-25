@@ -43,7 +43,11 @@ err = {
 
 assert_all = function (assertions, self)
     for k, assertion in pairs(assertions) do
-        _G['assert_' .. assertion](self)
+        if (type(assertion) == 'string') then
+            _G['assert_' .. assertion](self)
+        else
+            assertion(self)
+        end
     end
 end
 

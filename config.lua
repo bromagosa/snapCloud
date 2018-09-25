@@ -51,6 +51,17 @@ config({'development', 'test'}, {
     secondary_nginx_config = ''
 })
 
+config({'test'}, {
+    postgres = {
+        database = 'snapcloud_test'
+    },
+    store_path = 'store/test',
+    logging = {
+        queries = false,
+        locations = false
+    }
+})
+
 config({'production', 'staging'}, {
     use_daemon = 'on',
     port = os.getenv('PORT') or 80,
