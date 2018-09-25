@@ -35,6 +35,7 @@ local util = package.loaded.util
 local hmac = require('openssl.hmac')
 local config = package.loaded.config
 local encoding = require("lapis.util.encoding")
+local resty_string = package.loaded.resty_string
 
 local sso_secret = config.discourse_sso_secret
 
@@ -79,8 +80,8 @@ app:get('/discourse-sso', capture_errors(function(self)
 end))
 
 function create_signature(payload)
-    local digest = hmac.new(config.discourse_sso_secret, 'sha256')
-    return encoding.encode_base64(digest:final(payload))
+    local digest = hmac.new(sso_secret, 'sha256')
+    return resty_string.to_hex(digest:final(payload))
 end
 
 function extract_payload(payload)
