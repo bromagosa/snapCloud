@@ -39,7 +39,6 @@ package.loaded.resty_sha512 = require "resty.sha512"
 package.loaded.resty_string = require "resty.string"
 package.loaded.resty_random = require "resty.random"
 package.loaded.config = require("lapis.config").get()
-package.loaded.crypto = require('crypto')
 
 local app = package.loaded.app
 
