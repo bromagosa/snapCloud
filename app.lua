@@ -41,6 +41,7 @@ package.loaded.resty_random = require "resty.random"
 package.loaded.config = require("lapis.config").get()
 
 local app = package.loaded.app
+local config = package.loaded.config
 
 -- Store whitelisted domains
 local domain_allowed = require('cors')
@@ -141,8 +142,17 @@ function app:handle_error(err, trace)
     return errorResponse(err, 500)
 end
 
--- The API is implemented in the api.lua file
+-- Enable the ability to have a maintenace mode
+-- No routes are served, and a generic error is returned.
+if config.maintenance_mode == 'true' then
+    local msg = 'The Snap!Cloud is currently down for maintenance.'
+    app:get('/*', function(self)
+        return errorResponse(msg, 500)
+    end)
+    return app
+end
 
+-- The API is implemented in the api.lua file
 require 'api'
 require 'discourse'
 
