@@ -75,11 +75,13 @@ end
 -- Database abstractions
 
 package.loaded.Users = package.loaded.Model:extend('users', {
-    primary_key = { 'username' }
+    primary_key = { 'username' },
+    timestamp = true
 })
 
 package.loaded.Projects = package.loaded.Model:extend('projects', {
-    primary_key = { 'username', 'projectname' }
+    primary_key = { 'username', 'projectname' },
+    timestamp = true
 })
 
 package.loaded.Tokens = package.loaded.Model:extend('tokens', {
