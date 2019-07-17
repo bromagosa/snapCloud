@@ -11,4 +11,4 @@ OPENSSL_BREW='/usr/local/opt/openssl/'
 
 echo 'Installing lua dependencies'
 # For some reason luarocks needs both directories specified...
-luarocks install --lua-dir=$LUA_DIR snap-cloud-beta-0.rockspec OPENSSL_DIR=$OPENSSL_BREW CRYPTO_DIR=$OPENSSL_BREW $@
+luarocks install --lua-dir=$LUA_DIR snap-cloud-beta-0.rockspec OPENSSL_DIR=$OPENSSL_BREW CRYPTO_DIR=$OPENSSL_BREW $@ CC=clang++

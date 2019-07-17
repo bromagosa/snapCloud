@@ -37,6 +37,27 @@ local types = schema.types
 return {
     -- TODO: We will eventually create migrations for the other tables.
 
+    ['2019-01-01:0'] = function ()
+        schema.create_table("remixes", {
+            { 'original_project_id', types.foreign_key },
+            { 'remixed_project_id', types.foreign_key({ null = true }) },
+            { 'created', types.time({ timezone = true }) }
+        })
+
+        schema.create_index('remixes', 'original_project_id')
+        schema.create_index('remixes', 'remixed_project_id')
+
+        db.query([[
+            ALTER TABLE remixes
+            ADD CONSTRAINT remixes_original_project_id_fkey FOREIGN KEY (original_project_id)
+            REFERENCES projects(id)
+        ]])
+        db.query([[
+            ALTER TABLE remixes
+            ADD CONSTRAINT remixes_remixed_project_id_fkey FOREIGN KEY (remixed_project_id)
+            REFERENCES projects(id)
+        ]])
+    end,
     -- Create Collections and CollectionMemberships
     ['2019-01-04:0'] = function ()
         schema.create_table("collections", {
