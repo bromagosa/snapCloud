@@ -364,11 +364,22 @@ ProjectController = {
                 assert_users_match(self, err.nonexistent_project)
             end
 
+            local query = db.interpolate_query(
+                'JOIN active_users on (active_users.id = comments.user_id)' ..
+                    'WHERE comments.project_id = ?' ..
+                    'ORDER BY comments.created_at DESC',
+                project.id)
+
+
             local paginator =
                 Comments:paginated(
-                    'where project_id = ? order by created_at desc',
-                    project.id,
-                    { per_page = self.params.pagesize or 16 }
+                    query,
+                    {
+                        per_page = self.params.pagesize or 16,
+                        fields =
+                            'active_users.username, comments.created_at, ' ..
+                            'comments.content'
+                    }
                 )
 
             local comments = self.params.page and
