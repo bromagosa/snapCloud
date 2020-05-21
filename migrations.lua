@@ -44,6 +44,7 @@ return {
             { 'project_id', types.foreign_key },
             { 'user_id', types.foreign_key },
             { 'created_at', types.time({ timezone = true }) },
+            { 'updated_at', types.time({ timezone = true }) },
             { 'content', types.text({ null = false }) }
         })
     end,
