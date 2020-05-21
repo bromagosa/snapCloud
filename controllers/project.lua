@@ -32,6 +32,7 @@ local Users = package.loaded.Users
 local DeletedProjects = package.loaded.DeletedProjects
 local Remixes = package.loaded.Remixes
 local CollectionMemberships = package.loaded.CollectionMemberships
+local Comments = package.loaded.Comments
 
 local disk = package.loaded.disk
 
@@ -351,6 +352,34 @@ ProjectController = {
             end
         }),
 
+        project_comments = function (self)
+            -- GET /projects/:username/:projectname/comments
+            -- Description: Get a list of all comments attached to this project
+            -- Parameters:  page, pagesize
+            local project =
+                Projects:find(self.params.username, self.params.projectname)
+
+            if not project then yield_error(err.nonexistent_project) end
+            if not project.ispublic then
+                assert_users_match(self, err.nonexistent_project)
+            end
+
+            local paginator =
+                Comments:paginated(
+                    'where project_id = ? order by created_at desc',
+                    project.id,
+                    { per_page = self.params.pagesize or 16 }
+                )
+
+            local comments = self.params.page and
+                paginator:get_page(self.params.page) or paginator:get_all()
+
+            return jsonResponse({
+                pages = self.params.page and paginator:num_pages() or nil,
+                comments = comments
+            })
+        end,
+
         project_thumbnail = cached({
             -- GET /projects/:username/:projectname/thumbnail
             -- Description: Get a project thumbnail.
@@ -537,6 +566,39 @@ ProjectController = {
             --]]
 
             return okResponse('project ' .. self.params.projectname .. ' updated')
+        end,
+
+        project_comment = function (self)
+            -- POST /projects/:username/:projectname/comment
+            -- Description: Add a comment to a project.
+            -- Body:        content
+
+            assert_all({assert_user_exists, assert_users_match}, self)
+            if self.current_user:isbanned() then yield_error(err.banned) end
+
+            -- Read request body and parse it into JSON
+            ngx.req.read_body()
+            local body_data = ngx.req.get_body_data()
+            local body = body_data and util.from_json(body_data) or nil
+
+            validate.assert_valid(body, {
+                -- at least say "hi" ;)
+                { 'content', exists = true, min_length = 2, max_length = 1000 }
+            })
+
+            local project =
+                Projects:find(self.params.username, self.params.projectname)
+
+            if not project then yield_error(err.nonexistent_project) end
+
+            Comments:create({
+                project_id = project.id,
+                user_id = self.current_user.id,
+                created_at = db.format_date(),
+                content = body.content
+            })
+
+            return okResponse('comment added to ' .. self.params.projectname)
         end
     },
 
@@ -573,6 +635,26 @@ ProjectController = {
                 return okResponse('Project ' .. self.params.projectname
                     .. ' has been removed.')
             end
+        end,
+
+        project_comment = function (self)
+            -- DELETE /projects/:username/:projectname/comment
+            -- Description: Delete a comment
+            -- Parameters: comment_id
+
+            -- Path could just be /comments/:comment_id, since we don't really
+            -- need any more information than that, but it is kept like this for
+            -- consistency with POST
+
+            assert_all({assert_user_exists, assert_users_match}, self)
+
+            local comment =
+                Comments:find(self.params.comment_id)
+
+            if comment then comment:delete() end
+
+            return okResponse('comment with id ' .. self.params.comment_id ..
+                ' deleted')
         end
     }
 }

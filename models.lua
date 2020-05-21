@@ -145,3 +145,10 @@ package.loaded.BannedIPs = Model:extend(
         timestamp = true
     }
 )
+
+package.loaded.Comments = Model:extend(
+    'comments', {
+        primary_key = 'id',
+        timestamp = true
+    }
+)

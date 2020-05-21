@@ -30,16 +30,27 @@
 -- You should have received a copy of the GNU Affero General Public License
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-local db = require("lapis.db")
-local schema = require("lapis.db.schema")
+local db = require('lapis.db')
+local schema = require('lapis.db.schema')
 local types = schema.types
 
 return {
     -- TODO: We will eventually create migrations for the other tables.
 
+    -- Create Comments
+    ['2020-05-21'] = function ()
+        schema.create_table('comments', {
+            { 'id', types.serial({ primary_key = true }) },
+            { 'project_id', types.foreign_key },
+            { 'user_id', types.foreign_key },
+            { 'created_at', types.time({ timezone = true }) },
+            { 'content', types.text({ null = false }) }
+        })
+    end,
+
     -- Create Collections and CollectionMemberships
     ['2019-01-04:0'] = function ()
-        schema.create_table("collections", {
+        schema.create_table('collections', {
             { 'id', types.serial({ primary_key = true }) },
             { 'name', types.text },
             { 'creator_id', types.foreign_key },
@@ -54,7 +65,7 @@ return {
         })
         schema.create_index('collections', 'creator_id')
 
-        schema.create_table("collection_memberships", {
+        schema.create_table('collection_memberships', {
             { 'id', types.serial({ primary_key = true }) },
             { 'collection_id', types.foreign_key },
             { 'project_id', types.foreign_key },
@@ -117,7 +128,7 @@ return {
 
     -- Add a table to store spambot IPs and ban them
     ['2019-02-05:0'] = function ()
-        schema.create_table("banned_ips", {
+        schema.create_table('banned_ips', {
             { 'ip', types.text({ primary_key = true }) },
             { 'created_at', types.time({ timezone = true }) },
             { 'updated_at', types.time({ timezone = true }) },

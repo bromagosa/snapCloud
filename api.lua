@@ -101,6 +101,8 @@ app:match(api_route('project_versions', '/projects/:username/:projectname/versio
 app:match(api_route('project_remixes', '/projects/:username/:projectname/remixes', ProjectController, { 'GET' }))
 app:match(api_route('project_collections', '/projects/:username/:projectname/collections', ProjectController, { 'GET' }))
 app:match(api_route('project_thumbnail', '/projects/:username/:projectname/thumbnail', ProjectController, { 'GET' }))
+app:match(api_route('project_comments', '/projects/:username/:projectname/comments', ProjectController, { 'GET' }))
+app:match(api_route('project_comment', '/projects/:username/:projectname/comment', ProjectController, { 'POST', 'DELETE' }))
 
 -- Collections
 -- ===========
