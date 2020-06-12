@@ -146,13 +146,8 @@ ProjectController = {
             -- Description: Get a particular project.
             --              Response will depend on query issuer permissions.
             -- Parameters:  delta, ispublic, ispublished
-            local project =
-                Projects:find(self.params.username, self.params.projectname)
-
-            if not project then yield_error(err.nonexistent_project) end
-            if not (project.ispublic or users_match(self)) then
-                assert_admin(self, err.nonexistent_project)
-            end
+            local project = assert_project(self, self.params.username, self.params.projectname)
+            assert_error(can_view_project(self, project), err.nonexistent_project)
 
             -- self.params.delta is a version indicator
             -- delta = null will fetch the current version
@@ -179,13 +174,8 @@ ProjectController = {
             -- Description: Get a project metadata.
             -- Parameters:  projectname, ispublic, ispublished, lastupdated,
             --              lastshared
-            local project =
-                Projects:find(self.params.username, self.params.projectname)
-
-            if not project then yield_error(err.nonexistent_project) end
-            if not project.ispublic then
-                assert_users_match(self, err.nonexistent_project)
-            end
+            local project = assert_project(self, self.params.username, self.params.projectname)
+            assert_error(can_view_project(self, project), err.nonexistent_project)
 
             local remixed_from =
                 Remixes:select('where remixed_project_id = ?', project.id)[1]
@@ -217,13 +207,8 @@ ProjectController = {
             -- GET /projects/:username/:projectname/versions
             -- Description: Get info about backed up project versions.
             -- Body:        versions
-            local project =
-                Projects:find(self.params.username, self.params.projectname)
-
-            if not project then yield_error(err.nonexistent_project) end
-            if not project.ispublic then
-                assert_users_match(self, err.nonexistent_project)
-            end
+            local project = assert_project(self, self.params.username, self.params.projectname)
+            assert_error(can_view_project(self, project), err.nonexistent_project)
 
             -- seconds since last modification
             local query = db.select(
@@ -247,13 +232,9 @@ ProjectController = {
             -- GET /projects/:username/:projectname/remixes
             -- Description: Get a list of all published remixes from a project.
             -- Parameters:  page, pagesize
-            local project =
-                Projects:find(self.params.username, self.params.projectname)
+            local project = assert_project(self, self.params.username, self.params.projectname)
 
-            if not project then yield_error(err.nonexistent_project) end
-            if not project.ispublic then
-                assert_users_match(self, err.nonexistent_project)
-            end
+            assert_error(can_view_project(self, project), err.nonexistent_project)
 
             --TODO fetch only remixes of non-deleted projects. Otherwise
             --     page count includes deleted remixes!
@@ -298,15 +279,12 @@ ProjectController = {
             -- Parameters:  page, pagesize
             exptime = 60, -- cache expires after 60 seconds
             function (self)
-                local project =
-                    Projects:find(self.params.username, self.params.projectname)
+                local project = assert_project(self, self.params.username, self.params.projectname)
 
-                if not project then yield_error(err.nonexistent_project) end
-                if not project.ispublic then
-                    assert_users_match(self, err.nonexistent_project)
-                end
+                assert_error(can_view_project(self, project), err.nonexistent_project)
 
                 -- This logic is extremely convoluted. It needs to be rethought.
+                -- collections = Project:get_collections() then filter with can_view_collection()
                 local query = db.interpolate_query(
                     'inner join collections on ' ..
                     'collection_memberships.collection_id = collections.id ' ..
@@ -356,14 +334,8 @@ ProjectController = {
             -- Description: Get a project thumbnail.
             exptime = 30, -- cache expires after 30 seconds
             function (self)
-                local project =
-                    Projects:find(self.params.username, self.params.projectname)
-                if not project then yield_error(err.nonexistent_project) end
-
-                if not users_match(self)
-                    and not project.ispublic then
-                    yield_error(err.nonexistent_project)
-                end
+                local project = assert_project(self, self.params.username, self.params.projectname)
+                assert_error(can_view_project(self, project), err.nonexistent_project)
 
                 -- Lazy Thumbnail generation
                 return rawResponse(

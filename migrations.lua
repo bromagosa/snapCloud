@@ -123,5 +123,14 @@ return {
             { 'updated_at', types.time({ timezone = true }) },
             { 'offense_count', types.integer, { default = 1 } }
         })
-    end
+    end,
+
+        -- Add a viewer_ids[] field to collections
+        ['2020-06-11:0'] = function ()
+            schema.add_column(
+                'collections',
+                'viewer_ids',
+                types.foreign_key({ array = true, null = true })
+            )
+        end
 }

@@ -201,9 +201,18 @@ end
 
 -- Projects
 
-assert_project_exists = function (self, message)
-    if not (Projects:find(self.params.username, self.params.projectname)) then
-        yield_error(message or err.nonexistent_project)
+assert_project = function (self, message)
+    return assert_error(Projects:find(self.params.username, self.params.projectname),
+                        message or err.nonexistent_project)
+end
+
+can_view_project = function(self, project)
+    if users_match(self) or project.ispublic then
+        return true
+    else
+        local collections = project:get_collections()
+        -- if can view collections return true
+        assert_admin(self, err.nonexistent_project)
     end
 end
 
@@ -308,17 +317,18 @@ assert_collection_exists = function (self)
 end
 
 assert_can_view_collection = function (self, collection)
-    if (not collection.shared and not collection.published
-            and not (
-                users_match(self) or
-                can_edit_collection(self, collection))
-            ) then
-        if collection.id == 0 then
-            -- Reviewers, moderators and admins can view the Flagged collection
-            assert_has_one_of_roles(self, { 'reviewer', 'moderator', 'admin' })
-        else
-            yield_error(err.nonexistent_collection)
+    if collection.shared or collection.published then
+        return
+    elseif users_match(self) or can_edit_collection(self, collection) then
+        return
+    elseif collection.id == 0 then
+        -- Reviewers, moderators and admins can view the Flagged collection
+        assert_has_one_of_roles(self, { 'reviewer', 'moderator', 'admin' })
+    else
+        for _, viewer_id in pairs(collection.viewer_ids) do
+            if self.current_user.id == viewer_id then return end
         end
+        yield_error(err.nonexistent_collection)
     end
 end
 
@@ -336,7 +346,8 @@ assert_can_add_project_to_collection = function (self, project, collection)
             project.ispublished
     end
 
-    yield_error(err.nonexistent_project)
+    -- TODO: Can't Edit Collection Message?
+    yield_error(err.auth)
 end
 
 assert_can_remove_project_from_collection =
@@ -388,4 +399,3 @@ course_name_filter = function ()
     end
     return filter
 end
---]]

@@ -58,6 +58,13 @@ package.loaded.Projects = Model:extend('active_projects', {
                 return "Project names must have at least one character."
             end
         end
+    },
+    relations = {
+        {'collections', -- a project has many collections through collection memberships
+         many = true,
+         fetch = function(self)
+            return Collections:select('JOIN collection_memberships cm ON cm.collection_id = collections.id JOIN projects p ON p.id = cm.project_id WHERE p.id = ?', self.id)
+         end}
     }
 })
 
