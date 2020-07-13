@@ -25,8 +25,13 @@
 
 local xml = require("xml")
 local config = package.loaded.config
+local yield_error = package.loaded.yield_error
 
 local disk = {}
+
+function disk:timestamp_command(dir)
+    return 'stat ' .. config.stat_arguments .. ' ' .. dir .. '/project.xml'
+end
 
 function disk:directory_for_id (id)
     return config.store_path .. '/' .. math.floor(id / 1000) .. '/' .. id
@@ -111,11 +116,19 @@ function disk:update_name(id, name)
     end)
 end
 
+function disk:update_metadata(id, name, notes)
+    self:update_xml(id, function (project)
+        project.name = name
+        local old_notes = xml.find(project, 'notes')
+        old_notes[1] = notes
+    end)
+end
+
 function disk:update_xml(id, update_function)
     local dir = self:directory_for_id(id)
     local project_file = io.open(dir .. '/project.xml', 'r')
     if (project_file) then
-        if pcall(
+        local success, message = pcall(
             function ()
                 local project = xml.load(project_file:read('*all'))
                 project_file:close()
@@ -124,10 +137,26 @@ function disk:update_xml(id, update_function)
                 project_file = io.open(dir .. '/project.xml', 'w+')
                 project_file:write(xml.dump(project))
                 project_file:close()
-            end) then
+            end)
+        if success then
+            project_file = io.open(dir .. '/project.xml', 'r')
+            local contents = project_file:read('*all')
+            if #contents == 0 then
+                -- File length is zero! File got corrupted somehow.
+                -- Let's recover the previous delta, which was backed up right
+                -- before attempting to update the XML.
+                project_file = io.open(dir .. '/project.xml', 'w+')
+                local backup = self:retrieve(id, 'project.xml', '-1')
+                project_file:write(backup)
+                project_file:close()
+                yield_error(err.update_project_fail)
+            else
+                project_file:close()
+            end
         else
-            project_file:close()
-            yield_error(err.unparseable_xml)
+            if project_file then project_file:close() end
+            ngx.log(message)
+            yield_error(err.unparseable_xml .. tostring(message))
         end
     else
         yield_error(err.file_not_found)
@@ -138,7 +167,7 @@ function disk:get_version_metadata(id, delta)
     local dir = self:directory_for_id(id) .. '/d' .. delta
     local project_file = io.open(dir .. '/project.xml', 'r')
     if (project_file) then
-        local command = io.popen('stat -c %Y ' .. dir .. '/project.xml')
+        local command = io.popen(self:timestamp_command(dir))
         local last_modified = tonumber(command:read())
         command:close()
         return {
@@ -161,10 +190,9 @@ function disk:backup_project(id)
     os.execute('mkdir -p ' .. dir .. '/d-1')
     os.execute('cp -p ' .. dir .. '/*.xml ' .. dir .. '/thumbnail ' ..
         dir .. '/d-1')
-
     -- If the current project was modified more than 12 hours ago,
     -- we save it into the /d-2 folder
-    local command = io.popen('stat -c %Y ' .. dir .. '/project.xml')
+    local command = io.popen(self:timestamp_command(dir))
     local last_modified = tonumber(command:read())
     command:close()
     if (os.time() - last_modified > 43200) then

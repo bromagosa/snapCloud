@@ -29,6 +29,8 @@ config({'development', 'staging', 'production', 'test'}, {
     discourse_sso_secret = os.getenv('DISCOURSE_SSO_SECRET'),
     worker_connections = os.getenv('WORKER_CONNECTIONS') or 1024,
 
+    stat_arguments = os.getenv('STAT_ARGS') or '-c %Y',
+
     hostname = os.getenv('HOSTNAME') or 'localhost',
     secondary_hostname = os.getenv('SECONDARY_HOSTNAME') or 'localhost',
     maintenance_mode = os.getenv('MAINTENANCE_MODE') or 'false'

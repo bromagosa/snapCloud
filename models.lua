@@ -51,7 +51,14 @@ package.loaded.Users = Model:extend('active_users', {
 package.loaded.DeletedUsers = Model:extend('deleted_users')
 
 package.loaded.Projects = Model:extend('active_projects', {
-    primary_key = {'username', 'projectname'}
+    primary_key = {'username', 'projectname'},
+    constraints = {
+        projectname = function (_self, name)
+            if not name or string.len(name) < 1 then
+                return "Project names must have at least one character."
+            end
+        end
+    }
 })
 
 package.loaded.DeletedProjects = Model:extend('deleted_projects', {

@@ -1,7 +1,7 @@
 -- CORS module
 -- ==========
 --
--- A list of whitelisted domains that we support.
+-- A list of allowed domains that we support.
 --
 -- Written by Bernat Romagosa and Michael Ball
 --
@@ -24,11 +24,10 @@
 
 local domain_allowed = {}
 domain_allowed['snap.berkeley.edu'] = true
-domain_allowed['amazingrobots.net'] = true
-domain_allowed['snap4arduino.rocks'] = true
 -- This domain serves an HTTP only Snap! IDE
 domain_allowed['extensions.snap.berkeley.edu'] = true
--- Snap4Arduino for Chromebooks
+-- Snap4Arduino, and its Chromebook version
+domain_allowed['snap4arduino.rocks'] = true
 domain_allowed['chrome-extension://bdmapaboflkhdmcgdpfooeeeadejodia'] = true
 domain_allowed['chrome-extension://ghipaghphhpfncbokoobcjlapbnceipg'] = true
 -- App Server Domains
@@ -47,7 +46,10 @@ domain_allowed['web.media.mit.edu'] = true
 domain_allowed['eliza.csc.ncsu.edu'] = true
 domain_allowed['arena.csc.ncsu.edu'] = true
 domain_allowed['stemc.csc.ncsu.edu'] = true
+domain_allowed['snapapps.fi.ncsu.edu'] = true
 domain_allowed['lambda.cs10.org'] = true
+domain_allowed['ecraft2learn.github.io'] = true
+domain_allowed['microworld.edc.org'] = true
 -- All edX Sites, and test sites
 domain_allowed['courses.edge.edx.org'] = true
 domain_allowed['courses.edx.org'] = true
@@ -59,8 +61,16 @@ domain_allowed['preview.edx.org'] = true
 domain_allowed['studio.edge.edx.org'] = true
 domain_allowed['studio.edx.org'] = true
 domain_allowed['edge.edx.org'] = true
+-- SoundScope Sites
+domain_allowed['soundscope-website-beta.s3.amazonaws.com/index.html'] = true
+domain_allowed['soundscope-website-beta.s3.amazonaws.com'] = true
+domain_allowed['soundscope-website.web.app'] = true
+-- Others
+domain_allowed['www.maketolearn.org'] = true
+domain_allowed['snap.techlit.org'] = true
+domain_allowed['bjc.techlit.org'] = true
+domain_allowed['amazingrobots.net'] = true
 -- Development
-domain_allowed['romagosa.work'] = true
 domain_allowed['localhost'] = true
 
 return domain_allowed

@@ -184,11 +184,17 @@ function _M.report(level, title)
   if method == 'GET' then
     request.GET = ngx.req.get_uri_args()
   elseif method == 'POST' then
-    request.POST = ngx.req.get_post_args()
+    ngx.req.read_body()
+    local args, err = ngx.req.get_post_args()
+    if err then
+      request.POST = 'ERROR READING POST ARGS'
+    else
+      request.POST = args
+    end
   end
 
   -- create a light thread to send the HTTP request in background
-  ngx.timer.at(0, send_request, level, title,  debug.traceback(), request)
+  ngx.timer.at(0, send_request, level, title, debug.traceback(), request)
 end
 
 return _M

@@ -53,7 +53,9 @@ rollbar.set_environment(config._name)
 
 -- Store whitelisted domains
 local domain_allowed = require('cors')
+
 -- Utility functions
+local date = require("date")
 local helpers = require('helpers')
 
 -- wrap the lapis capture errors to provide our own custom error handling
@@ -78,9 +80,9 @@ require 'responses'
 
 -- Make cookies persistent
 app.cookie_attributes = function(self)
-    local date = require("date")
     local expires = date(true):adddays(365):fmt("${http}")
-    return "Expires=" .. expires .. "; Path=/; HttpOnly;"
+    local secure = config._name ~= 'development' and " Secure" or ""
+    return "Expires=" .. expires .. "; Path=/; HttpOnly; SameSite=None;" .. secure
 end
 
 -- Remove the protocol and port from a URL
@@ -99,34 +101,37 @@ app:before_filter(function (self)
         return
     end
 
-    if ngx.req.get_method() ~= 'OPTIONS' then
-        -- unescape all parameters
-        for k, v in pairs(self.params) do
-            self.params[k] = package.loaded.util.unescape(v)
-        end
-
-        if self.params.username then
-            self.params.username = self.params.username:lower()
-            self.queried_user = package.loaded.Users:find({ username = self.params.username })
-        end
-
-        if self.session.username then
-            self.current_user = package.loaded.Users:find({ username = self.session.username })
-        else
-            self.session.username = ''
-            self.current_user = nil
-        end
-
-        if self.params.matchtext then
-            self.params.matchtext = '%' .. self.params.matchtext .. '%'
-        end
-    end
     -- Set Access Control header
     local domain = domain_name(self.req.headers.origin)
     if self.req.headers.origin and domain_allowed[domain] then
         self.res.headers['Access-Control-Allow-Origin'] = self.req.headers.origin
         self.res.headers['Access-Control-Allow-Credentials'] = 'true'
         self.res.headers['Vary'] = 'Origin'
+    end
+
+    if ngx.req.get_method() == 'OPTIONS' then
+        return -- avoid any unnecessary work for CORS pre-flight requests
+    end
+
+    -- unescape all parameters
+    for k, v in pairs(self.params) do
+        self.params[k] = package.loaded.util.unescape(v or '')
+    end
+
+    if self.params.username and self.params.username ~= '' then
+        self.params.username = self.params.username:lower()
+        self.queried_user = package.loaded.Users:find({ username = self.params.username })
+    end
+
+    if self.session.username then
+        self.current_user = package.loaded.Users:find({ username = self.session.username })
+    else
+        self.session.username = ''
+        self.current_user = nil
+    end
+
+    if self.params.matchtext then
+        self.params.matchtext = '%' .. self.params.matchtext .. '%'
     end
 end)
 
@@ -143,16 +148,18 @@ end
 
 function app:handle_error(err, trace)
     -- self.current_user is not available here.
-    local current_user = package.loaded.Users:find({ username = self.session.username })
+    if self.session.username then
+        local current_user = package.loaded.Users:find({ username = self.session.username })
+    end
+    local user_params = {}
     if current_user then
         user_params = current_user:rollbar_params()
-    else
-        user_params = {}
     end
 
     rollbar.set_person(user_params)
+    err = helpers.normalize_error(err)
     rollbar.set_custom_trace(err .. "\n\n" .. trace)
-    rollbar.report(rollbar.ERR, helpers.normalize_error(err))
+    rollbar.report(rollbar.ERR, err)
     return errorResponse(err, 500)
 end
 

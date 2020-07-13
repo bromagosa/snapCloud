@@ -43,7 +43,7 @@ ProjectController = {
         projects = cached({
             -- GET /projects
             -- Description: Get a list of published projects.
-            -- Parameters:  page, pagesize, matchtext, withthumbnail
+            -- Parameters:  page, pagesize, matchtext, withthumbnail, filtered
             exptime = 30, -- cache expires after 30 seconds
             function (self)
                 local query = 'where ispublished'
@@ -56,6 +56,12 @@ ProjectController = {
                             self.params.matchtext,
                             self.params.matchtext
                         )
+                end
+
+                -- Apply project name filter to hide projects with typical
+                -- BJC or Teals names.
+                if self.params.filtered then
+                    query = query .. db.interpolate_query(course_name_filter())
                 end
 
                 local paginator =
@@ -300,12 +306,26 @@ ProjectController = {
                     assert_users_match(self, err.nonexistent_project)
                 end
 
+                -- This logic is extremely convoluted. It needs to be rethought.
                 local query = db.interpolate_query(
                     'inner join collections on ' ..
                     'collection_memberships.collection_id = collections.id ' ..
                     'inner join users on collections.creator_id = users.id ' ..
-                    'where collection_memberships.project_id = ?',
-                    project.id
+                    'where collection_memberships.project_id = ? ' ..
+                    'and (collections.published or ' ..
+                    '(collections.shared and ?) or ' ..
+                    '(not collections.shared and not ?)' ..
+                        (self.current_user
+                            and
+                                (' or (collections.creator_id = ?) or ' ..
+                                '(collections.editor_ids @> array[?]))')
+                            or
+                                ')'),
+                    project.id,
+                    project.ispublic,
+                    project.ispublic,
+                    self.current_user and self.current_user.id or nil,
+                    self.current_user and self.current_user.id or nil
                 )
 
                 paginator = CollectionMemberships:paginated(
@@ -314,13 +334,8 @@ ProjectController = {
                         fields = 'collections.creator_id, collections.name, ' ..
                             'collection_memberships.project_id, '..
                             'collections.thumbnail_id, collections.shared, ' ..
-                            'collections.published',
-                        per_page = self.params.pagesize or 16,
-                        prepare_results = function (collections)
-                            Users:include_in(collections, 'creator_id',
-                                { fields = 'username, id' })
-                            return collections
-                        end
+                            'collections.published, users.username',
+                        per_page = self.params.pagesize or 16
                     })
 
                 local collections = self.params.page and
@@ -492,31 +507,36 @@ ProjectController = {
                 or (self.params.ispublic and not project.ispublic))
 
             -- Read request body and parse it into JSON
+            -- TODO: Replace this with json_params() after updating the projectname key.
             ngx.req.read_body()
             local body_data = ngx.req.get_body_data()
             local body = body_data and util.from_json(body_data) or nil
-            local new_name = body and body.projectname or nil
-            local new_notes = body and body.notes or nil
+            --local new_name = body and body.projectname and body.projectname ~= project.projectname
+            --local new_notes = body and body.notes and body.notes ~= project.notes
 
-            -- save new notes and project name into the project XML
-            if new_notes then disk:update_notes(project.id, new_notes) end
-            if new_name then disk:update_name(project.id, new_name) end
-
-            project:update({
-                projectname = new_name or project.projectname,
+            local result, error = project:update({
+                --projectname = new_name and body.projectname or project.projectname,
                 lastupdated = db.format_date(),
                 lastshared = shouldUpdateSharedDate and db.format_date() or nil,
                 firstpublished =
                     project.firstpublished or
                     (self.params.ispublished and db.format_date()) or
                     nil,
-                notes = new_notes or project.notes,
+                --notes = new_notes and body.notes or project.notes,
                 ispublic = self.params.ispublic or project.ispublic,
                 ispublished = self.params.ispublished or project.ispublished
             })
 
-            return okResponse('project ' .. self.params.projectname
-                .. ' updated')
+            if error then yield_error({ msg = error, status = 422 }) end
+
+            --[[
+            -- save new notes and project name into the project XML
+            if new_notes or new_name then
+                disk:update_metadata(project.id, project.projectname, project.notes)
+            end
+            --]]
+
+            return okResponse('project ' .. self.params.projectname .. ' updated')
         end
     },
 
