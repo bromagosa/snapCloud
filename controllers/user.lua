@@ -51,7 +51,12 @@ UserController = {
                 self.session.user_id = nil
             end
 
+            if not self.session.previous_username_admin then
+                self.session.previous_username_admin = ''
+            end
+
             return jsonResponse({
+                previous_username_admin = self.session.previous_username_admin,
                 username = self.session.username,
                 role = self.session.role,
                 verified = self.session.verified,
@@ -454,6 +459,10 @@ UserController = {
                         yield_error(message)
                     end
                 end
+                
+                self.session.previous_username_admin = ''
+                self.session.previous_cookie_persist_admin = self.params.persist
+
                 self.session.username = self.queried_user.username
                 self.session.role = self.queried_user.role
                 self.session.verified = self.queried_user.verified
@@ -467,15 +476,34 @@ UserController = {
                         { days_left = self.queried_user.days_left })
                 end
             else
+                -- If the person logging in was the previous admin, reinstate Admin's login
+                if (self.session.previous_username_admin and (self.session.previous_username_admin == self.queried_user.username)) then
+                    self.session.previous_username_admin = ''
+                    -- self.session.previous_cookie_persist_admin cleared at the end
+                    self.session.username = self.queried_user.username
+                    self.session.role = self.queried_user.role
+                    self.session.verified = self.queried_user.verified
+                    self.session.user_id = self.queried_user.id
+                    self.cookies.persist_session = self.session.previous_cookie_persist_admin
+
+                    self.session.previous_cookie_persist_admin = 'false'
+
+                    return okResponse('Alias Logged out. Admin User ' .. self.queried_user.username
+                        .. ' logged back in.')
+                end
+                
                 -- Admins can log in as other people
                 assert_admin(self, 'wrong password')
-                local previous_username = self.current_user.username
+                
+                self.session.previous_username_admin = self.current_user.username
+                self.session.previous_cookie_persist_admin = self.cookies.persist_session
                 self.session.username = self.queried_user.username
                 self.session.role = self.queried_user.role
                 self.session.verified = self.queried_user.verified
                 self.session.user_id = self.queried_user.id
                 self.cookies.persist_session = 'false'
-                return okResponse('User ' .. previous_username ..
+                
+                return okResponse('User ' .. self.session.previous_username_admin ..
                     ' now logged in as ' .. self.queried_user.username)
             end
         end,
@@ -483,6 +511,8 @@ UserController = {
         logout = function (self)
             -- POST /logout
             -- Description: Logs out the current user from the system.
+            self.session.previous_username_admin = ''
+            self.session.previous_cookie_persist_admin = 'false'
             self.session.username = ''
             self.session.user_id = nil
             self.cookies.persist_session = 'false'
