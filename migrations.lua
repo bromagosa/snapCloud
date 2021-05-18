@@ -101,18 +101,20 @@ return {
                             'collection_id', 'project_id', 'user_id',
                             { unique = true })
     end,
-    -- Create and views for handling deleted items.
-    ['2019-02-01:0'] = function ()
-        schema.add_column('users',
-                          'deleted',
-                          types.time({ timezone = true, null = true }))
-        update_user_views()
 
-        schema.add_column('projects',
-                          'deleted',
-                          types.time({ timezone = true, null = true }))
-        update_project_views()
-    end,
+    -- REMOVED March 15, 2021 by Oscar Chan since cloud.sql already has these columns
+    -- Create and views for handling deleted items.
+    -- ['2019-02-01:0'] = function ()
+    --     schema.add_column('users',
+    --                       'deleted',
+    --                       types.time({ timezone = true, null = true }))
+    --     update_user_views()
+
+    --     schema.add_column('projects',
+    --                       'deleted',
+    --                       types.time({ timezone = true, null = true }))
+    --     update_project_views()
+    -- end,
 
     -- Add an editor_ids[] field to collections
     ['2019-02-04:0'] = function ()
