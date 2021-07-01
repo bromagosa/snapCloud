@@ -73,8 +73,13 @@ require 'responses'
 -- Make cookies persistent
 app.cookie_attributes = function(self)
     local expires = date(true):adddays(365):fmt("${http}")
-    local secure = config._name ~= 'development' and " Secure" or ""
-    return "Expires=" .. expires .. "; Path=/; HttpOnly; SameSite=None;" .. secure
+    local secure = " " .. "Secure"
+    local sameSite = "None"
+    if (config._name == 'development') then
+        secure = ""
+        sameSite = "Lax"
+    end
+    return "Expires=" .. expires .. "; Path=/; HttpOnly; SameSite=" .. sameSite .. ";" .. secure
 end
 
 -- Remove the protocol and port from a URL
